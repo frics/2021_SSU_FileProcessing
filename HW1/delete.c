@@ -32,6 +32,7 @@ int main(int argc, char* argv[]){
         fclose(to_delete);
         
         to_delete = fopen(argv[1], "w");
+        //write 해야하는 버퍼의 크기가 음수이면 write하지 않는다.
         if(front_size > 0)
             fwrite(front_buffer, sizeof(char), front_size, to_delete);
         if(back_size-delete_size > 0)
