@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
         //merged 파일 포인터에 fp1, fp2의 내용을 합친다.
         add(fp1, merged);
         add(fp2, merged);
-        printf("파일 복사가 완료되었습니다.\n");
+        printf("파일 합병 완료되었습니다.\n");
     
     }else{
         printf("인자가 부족합니다.\n");
