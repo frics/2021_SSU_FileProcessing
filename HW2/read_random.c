@@ -2,24 +2,24 @@
 #include <sys/types.h>
 #include <time.h>
 #include <stdlib.h>
-//ÇÊ¿äÇÏ¸é header file Ãß°¡ °¡´É
+//í•„ìš”í•˜ë©´ header file ì¶”ê°€ ê°€ëŠ¥
 
-#define SUFFLE_NUM	10000	// ÀÌ °ªÀº ¸¶À½´ë·Î ¼öÁ¤ÇÒ ¼ö ÀÖÀ½.
+#define SUFFLE_NUM	10000	// ì´ ê°’ì€ ë§ˆìŒëŒ€ë¡œ ìˆ˜ì •í•  ìˆ˜ ìˆìŒ.
 
 void GenRecordSequence(int *list, int n);
 void swap(int *a, int *b);
-// ÇÊ¿äÇÑ ÇÔ¼ö°¡ ÀÖÀ¸¸é ´õ Ãß°¡ÇÒ ¼ö ÀÖÀ½.
+// í•„ìš”í•œ í•¨ìˆ˜ê°€ ìˆìœ¼ë©´ ë” ì¶”ê°€í•  ìˆ˜ ìˆìŒ.
 
 int main(int argc, char **argv)
 {
 	int *read_order_list;
-	int num_of_records; // ·¹ÄÚµå ÆÄÀÏ¿¡ ÀúÀåµÇ¾î ÀÖ´Â ÀüÃ¼ ·¹ÄÚµåÀÇ ¼ö
+	int num_of_records; // ë ˆì½”ë“œ íŒŒì¼ì— ì €ì¥ë˜ì–´ ìˆëŠ” ì „ì²´ ë ˆì½”ë“œì˜ ìˆ˜
 
-	// ÀÌ ÇÔ¼ö¸¦ ½ÇÇàÇÏ¸é 'read_order_list' ¹è¿­¿¡´Â ÀĞ¾î¾ß ÇÒ ·¹ÄÚµå ¹øÈ£µéÀÌ ³ª¿­µÇ¾î ÀúÀåµÊ
+	// ì´ í•¨ìˆ˜ë¥¼ ì‹¤í–‰í•˜ë©´ 'read_order_list' ë°°ì—´ì—ëŠ” ì½ì–´ì•¼ í•  ë ˆì½”ë“œ ë²ˆí˜¸ë“¤ì´ ë‚˜ì—´ë˜ì–´ ì €ì¥ë¨
 	GenRecordSequence(read_order_list, num_of_records);
 
 	//
-	// 'read_order_list'¸¦ ÀÌ¿ëÇÏ¿© random ÇÏ°Ô read ÇÒ ¶§ °É¸®´Â ÀüÃ¼ ½Ã°£À» ÃøÁ¤ÇÏ´Â ÄÚµå ±¸Çö
+	// 'read_order_list'ë¥¼ ì´ìš©í•˜ì—¬ random í•˜ê²Œ read í•  ë•Œ ê±¸ë¦¬ëŠ” ì „ì²´ ì‹œê°„ì„ ì¸¡ì •í•˜ëŠ” ì½”ë“œ êµ¬í˜„
 	//
 
 	return 0;
