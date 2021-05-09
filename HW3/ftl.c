@@ -158,14 +158,14 @@ void ftl_write(int lsn, char *sectorbuf)
 				}
 				memset(pagebuf, '\0', PAGE_SIZE);
 			}
-			printf("lbn : %d, free : %d\n", lbn, dest_block_num);
+			//printf("lbn : %d, free : %d\n", lbn, dest_block_num);
 			mapping_table[lbn] = dest_block_num;
 			free_block = prev_block_num;
 			dd_erase(prev_block_num);
 		
 		}
 		else{//기존 블럭에 삽입
-			printf("기존 블럭에 삽입\n");
+		//	printf("기존 블럭에 삽입\n");
 			//spare 내용 저장
 			spare_table[ppn].lbn = lbn;
 			spare_table[ppn].lsn = lsn;
@@ -175,7 +175,7 @@ void ftl_write(int lsn, char *sectorbuf)
 		}
 	}else{
 		//빈 블럭 찾기
-		printf("빈블럭을 찾아보자 !!!!\n");
+	//	printf("빈블럭을 찾아보자 !!!!\n");
 		for(int i=0; i<BLOCKS_PER_DEVICE; i++){
 			if(mapping_table[i] == -1 && i != free_block){
 				pbn = i * PAGES_PER_BLOCK;

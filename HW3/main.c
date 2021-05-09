@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 	ftl_open(); 
 	
 	ftl_print();   // ftl_read(), ftl_write() 호출하기 전에 이 함수를 반드시 호출해야 함
-	/*char ch = 'A';
+	char ch = 'A';
 
 	for(int i=0; i<8; i++){
 		memset(sectorbuf, ch, SECTOR_SIZE);
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 		ftl_read(i, sectorbuf);
 		printf("Logical Page Number[%d] : %s\n", i, sectorbuf);
 		}
-	//*/
+	
 	// ftl_write() 및 ftl_read() 테스트 코드 작성
 	//
 	//ftl_open();
