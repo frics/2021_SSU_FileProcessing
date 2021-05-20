@@ -40,28 +40,73 @@ int main(int argc, char *argv[])
     // flash memory의 모든 바이트를 '0xff'로 초기화한다.
     // (512+16) * 4 = 2112바이트
 	
-    
-
 
 	ftl_open(); 
 	
 	ftl_print();   // ftl_read(), ftl_write() 호출하기 전에 이 함수를 반드시 호출해야 함
+
+
+	memset(sectorbuf, 'A', SECTOR_SIZE);
+	ftl_write(0, sectorbuf);
+
+	memset(sectorbuf, 'B', SECTOR_SIZE);
+	ftl_write(1, sectorbuf);
+
+	memset(sectorbuf, 'C', SECTOR_SIZE);
+	ftl_write(2, sectorbuf);
+
+	memset(sectorbuf,'D', SECTOR_SIZE);
+	ftl_write(3, sectorbuf);
+	//overwrite
+	memset(sectorbuf, 'U', SECTOR_SIZE);
+	ftl_write(2, sectorbuf);
+
+	ftl_print();
+
+	ftl_read(0, sectorbuf);
+	printf("read 0 : %s\n", sectorbuf);
+
+	ftl_read(1, sectorbuf);
+	printf("read 1 : %s\n", sectorbuf);
+
+	ftl_read(2, sectorbuf);
+	printf("read 2 : %s\n", sectorbuf);
+
+	/*
 	char ch = 'A';
 
 	for(int i=0; i<8; i++){
 		memset(sectorbuf, ch, SECTOR_SIZE);
 		ftl_write(i, sectorbuf);
 		memset(sectorbuf, '\0', SECTOR_SIZE);	
-		//ftl_read(i, sectorbuf);
-		//printf("Logical Page Number[%d] : %s\n", i, sectorbuf);
+		ftl_print();
 		ch++;
 		
 	}
-	for(int i=8-1; i>=0; i--){
+	for(int i =0; i<8; i++){
+		memset(sectorbuf, '\0', SECTOR_SIZE);
 		ftl_read(i, sectorbuf);
 		printf("Logical Page Number[%d] : %s\n", i, sectorbuf);
-		}
+	}
 	
+	ftl_print();
+
+	for(int i=0; i<8; i+=4){
+		memset(sectorbuf, ch, SECTOR_SIZE);
+		ftl_write(i, sectorbuf);
+		memset(sectorbuf, '\0', SECTOR_SIZE);	
+		ch++;
+		ftl_print();
+		
+	}
+	for(int i =0; i<8; i++){
+		memset(sectorbuf, '\0', SECTOR_SIZE);
+		ftl_read(i, sectorbuf);
+		printf("Logical Page Number[%d] : %s\n", i, sectorbuf);
+	}
+	
+	ftl_print();
+	*/
 	// ftl_write() 및 ftl_read() 테스트 코드 작성
 	//
 	//ftl_open();

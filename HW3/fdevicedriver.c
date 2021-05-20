@@ -42,7 +42,6 @@ int dd_erase(int pbn)
 {
 	char blockbuf[BLOCK_SIZE];
 	int ret;
-
 	memset((void*)blockbuf, (char)0xFF, BLOCK_SIZE);
 	
 	fseek(flashfp, BLOCK_SIZE*pbn, SEEK_SET);
