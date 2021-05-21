@@ -20,13 +20,14 @@
 //
 void readPage(FILE *fp, char *pagebuf, int pagenum)
 {
-
+	
 }
 
 //
 // 페이지 버퍼의 데이터를 주어진 페이지 번호에 해당하는 레코드 파일의 위치에 저장한다. 
 // 페이지 버퍼는 반드시 페이지 크기와 일치해야 한다.
 //
+
 void writePage(FILE *fp, const char *pagebuf, int pagenum)
 {
 
