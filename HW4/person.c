@@ -1,7 +1,20 @@
 #include <stdio.h>
 #include "person.h"
-//필요한 경우 헤더 파일과 함수를 추가할 수 있음
+#include<stdlib.h>
+#include<string.h>
 
+//./a.out a person.dat "8811032129018" "GD Hong" "23" "Seoul" "02-820-0924" "gdhong@ssu.ac.kr"
+//필요한 경우 헤더 파일과 함수를 추가할 수 있음
+#define HEADER_RECORD 16
+
+typedef struct _Header{
+	int page_cnt;
+	int record_cnt;
+	int d_record_num;
+	int d_page_num;
+}Header;
+
+Header header_record;
 // 과제 설명서대로 구현하는 방식은 각자 다를 수 있지만 약간의 제약을 둡니다.
 // 레코드 파일이 페이지 단위로 저장 관리되기 때문에 사용자 프로그램에서 레코드 파일로부터 데이터를 읽고 쓸 때도
 // 페이지 단위를 사용합니다. 따라서 아래의 두 함수가 필요합니다.
@@ -20,7 +33,12 @@
 //
 void readPage(FILE *fp, char *pagebuf, int pagenum)
 {
-	
+	if(sizeof(pagebuf) != PAGE_SIZE){
+		fprintf(stderr, "page size error.\n");
+		exit(1);
+	}
+	fseek(fp, PAGE_SIZE*pagenum+HEADER_RECORD, SEEK_SET);
+	fread((void *)pagebuf, PAGE_SIZE, 1, fp);
 }
 
 //
@@ -30,7 +48,12 @@ void readPage(FILE *fp, char *pagebuf, int pagenum)
 
 void writePage(FILE *fp, const char *pagebuf, int pagenum)
 {
-
+	if(sizeof(pagebuf) != PAGE_SIZE){
+		fprintf(stderr, "page size error.\n");
+		exit(1);
+	}
+	fseek(fp, PAGE_SIZE*pagenum+HEADER_RECORD, SEEK_SET);
+	fwrite((void *)pagebuf, PAGE_SIZE, 1, fp);
 }
 
 //
@@ -39,6 +62,37 @@ void writePage(FILE *fp, const char *pagebuf, int pagenum)
 // 
 void pack(char *recordbuf, const Person *p)
 {
+	int pos = 0;
+	//id
+	memcpy(recordbuf, p->id, strlen(p->id));
+	pos += strlen(p->id);
+	memset(recordbuf + pos, '#', 1);
+	pos+=1;
+	//name
+	memcpy(recordbuf + pos, p->name, strlen(p->name));
+	pos += strlen(p->name);
+	memset(recordbuf + pos, '#', 1);
+	pos += 1;
+	//age
+	memcpy(recordbuf + pos, p->age, strlen(p->age));
+	pos += strlen(p->age);
+	memset(recordbuf + pos, '#', 1);
+	pos += 1;
+	//addr
+	memcpy(recordbuf + pos, p->addr, strlen(p->addr));
+	pos += strlen(p->addr);
+	memset(recordbuf + pos, '#', 1);
+	pos += 1;
+	//phone
+	memcpy(recordbuf + pos, p->phone, strlen(p->phone));
+	pos += strlen(p->phone);
+	memset(recordbuf + pos, '#', 1);
+	pos += 1;
+	//email
+	memcpy(recordbuf + pos, p->email, strlen(p->email));
+	pos += strlen(p->email);
+	memset(recordbuf + pos, '#', 1);
+	
 
 }
 
@@ -47,6 +101,18 @@ void pack(char *recordbuf, const Person *p)
 //
 void unpack(const char *recordbuf, Person *p)
 {
+	char *ptr = strtok(recordbuf, "#");
+	strcpy(p->id, ptr);
+	ptr = strtok(NULL, "#");
+	strcpy(p->name, ptr);
+	ptr = strtok(NULL, "#");
+	strcpy(p->age, ptr);
+	ptr = strtok(NULL, "#");
+	strcpy(p->addr, ptr);
+	ptr = strtok(NULL, "#");
+	strcpy(p->phone, ptr);
+	ptr = strtok(NULL, "#");
+	strcpy(p->email, ptr);
 
 }
 
@@ -55,6 +121,9 @@ void unpack(const char *recordbuf, Person *p)
 //
 void add(FILE *fp, const Person *p)
 {
+	//1. 삭제 데이터가 존재하는 지 확인
+	//삭제 데이터가 존재하면 right size를 확인하여 first fit 전략을 사용하여 record 추가(삭제된 record의 크기만 고려하면 된다.)
+	//2. 삭제된 데이터가 없다면 마지막 데이터 페이지에 append하여 저장한다. 
 
 }
 
@@ -63,13 +132,109 @@ void add(FILE *fp, const Person *p)
 //
 void delete(FILE *fp, const char *id)
 {
+	char *pagebuf = malloc(sizeof(char)*PAGE_SIZE);
+	void *header_area = malloc(HEADER_AREA_SIZE);
+	char *recordbuf;
+	Person tmp;
+	int record_cnt;
+	int offset, len;
 
+	for(int i=0; i<header_record.page_cnt; i++){
+		readPage(fp, pagebuf, i);
+		memcpy(header_area, pagebuf, HEADER_AREA_SIZE);
+		memcpy(&record_cnt, header_area, sizeof(int));
+
+		for(int j=sizeof(record_cnt); j<sizeof(record_cnt)+record_cnt*8; j+=8){
+			memcpy(&offset, header_area+j, sizeof(int));
+			memcpy(&len, header_area+j+4, sizeof(int));
+			recordbuf = malloc(sizeof(char)*len);
+			memcpy(recordbuf, pagebuf+offset, len);
+			if(recordbuf[0] == '*'){
+				free(recordbuf);
+				continue;
+			}
+
+			unpack(recordbuf, &tmp);
+
+			if(strcmp(tmp.id, id) == 0){
+				//record에 삭제 기록
+				recordbuf[0] = '*';
+				memcpy(recordbuf+1, &i, sizeof(int));
+				memcpy(recordbuf+1+sizeof(int), &(j-4)/8, sizeof(int));
+				//pagebuf에 삭제된 record copy
+				memcpy(pagebuf+HEADER_AREA_SIZE+offset, recordbuf, len);
+				writePage(fp, pagebuf, i);
+				free(recordbuf);
+				free(pagebuf);
+				return;
+			}
+			free(recordbuf);
+			
+		}
+	}
+	free(pagebuf);
+	
 }
 
 int main(int argc, char *argv[])
 {
 	FILE *fp; // 레코드 파일의 파일 포인터
+	Person input;
+	char *recordbuf = malloc(sizeof(char)*MAX_RECORD_SIZE);
 
+
+	if((fp = fopen(argv[2], "r+b")) == NULL){
+		fp = fopen(argv[2], "w+b");
+		header_record.page_cnt = 0;
+		header_record.record_cnt = 0;
+		header_record.d_page_num = -1;
+		header_record.d_record_num = -1;
+		fwrite(&header_record, HEADER_RECORD, 1, fp);
+	}else{
+		fread(&header_record, HEADER_RECORD, 1, fp);
+		//printf("p_cnt : %d\nr_cnt : %d\nd_p_n : %d\nd_r_n : %d\n", header_record.page_cnt, header_record.record_cnt, header_record.d_page_num, header_record.d_record_num);
+	}
+	
+	if(argc > 3 ){
+		for(int i=0; i< argc; i++){
+			//printf("[%d] : %s\n", i, argv[i]);
+		}
+		if(strlen(argv[1]) != 1){
+			fprintf(stderr, "Invalid Option\n");
+			exit(1);
+		}
+
+		char option = argv[1][0];
+		
+		if(option == 'a'){ //record add
+			strcpy(input.id, argv[3]);
+			strcpy(input.name, argv[4]);
+			strcpy(input.age, argv[5]);
+			strcpy(input.addr, argv[6]);
+			strcpy(input.phone, argv[7]);
+			strcpy(input.email, argv[8]);
+			pack(recordbuf, &input);
+			printf("%s\n", recordbuf);
+			printf("size : %ld\n",strlen(recordbuf));
+			Person tmp;
+			unpack(recordbuf, &tmp);
+			printf("unpack : %s\n", tmp.id);
+			printf("unpack : %s\n", tmp.age);
+			printf("unpack : %s\n", tmp.email);
+
+		}else if(option == 'd'){ //record delete
+			
+		}else{
+			fprintf(stderr, "Invalid Option\n");
+			exit(1);
+		}
+		
+	
+	}else{
+		fprintf(stderr, "NEED MORE PARAMETER.\n");
+		exit(1);
+
+	}
 
 	return 1;
 }
