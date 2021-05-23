@@ -119,6 +119,10 @@ void unpack(const char *recordbuf, Person *p)
 
 }
 
+void writeHeader(FILE *fp){
+	fseek(fp, 0, SEEK_SET);
+	fwrite((void *)&header_record, HEADER_RECORD, 1, fp);
+}
 //
 // 새로운 레코드를 저장하는 기능을 수행하며, 터미널로부터 입력받은 필드값들을 구조체에 저장한 후 아래 함수를 호출한다.
 //
@@ -130,12 +134,12 @@ void add(FILE *fp, const Person *p)
 
 	char *pagebuf = malloc(sizeof(char)*PAGE_SIZE);
 	char *recordbuf = malloc(sizeof(char)*MAX_RECORD_SIZE);
-	void header_area = malloc(HEADER_AREA_SIZE);
+	void *header_area = malloc(HEADER_AREA_SIZE);
 	int record_cnt;
 	int page_num;
 	int offset, len;
 
-	pack(recordbuf, &p);
+	pack(recordbuf, p);
 	//삭제 레코드가 존재하는 지 확인한다. 
 	if(header_record.d_page_num != -1){
 		int d_page_num = header_record.d_page_num;
@@ -222,10 +226,7 @@ void delete(FILE *fp, const char *id)
 	
 }
 
-void writeHeader(FILE *fp){
-	fseek(fp, 0, SEEK_SET);
-	fwrite((void *)header_record, HEADER_RECORD, 1, fp);
-}
+
 int main(int argc, char *argv[])
 {
 	FILE *fp; // 레코드 파일의 파일 포인터
@@ -235,12 +236,13 @@ int main(int argc, char *argv[])
 
 	if((fp = fopen(argv[2], "r+b")) == NULL){
 		fp = fopen(argv[2], "w+b");
-		header_record.page_cnt = 1;
-		header_record.record_cnt = 1;
+		header_record.page_cnt = 0;
+		header_record.record_cnt = 0;
 		header_record.d_page_num = -1;
 		header_record.d_record_num = -1;
 		fwrite(&header_record, HEADER_RECORD, 1, fp);
 		//tmp
+		/*
 		char *page = (char*)malloc(sizeof(char)*PAGE_SIZE);
 		memset(page, '\0', PAGE_SIZE);
 		int cnt = 1, offset = 0, len = 60;
@@ -249,12 +251,13 @@ int main(int argc, char *argv[])
 		memcpy(page+8, &len, sizeof(int));
 		memcpy(page+HEADER_AREA_SIZE, "8811032129018#GD Hong#23#Seoul#02-820-0924#gdhong@ssu.ac.kr#", 60);
 		writePage(fp, page, 0);
-
+		*/
+		
 	}else{
 		fread(&header_record, HEADER_RECORD, 1, fp);
 		//printf("p_cnt : %d\nr_cnt : %d\nd_p_n : %d\nd_r_n : %d\n", header_record.page_cnt, header_record.record_cnt, header_record.d_page_num, header_record.d_record_num);
 	}
-	delete(fp, "8811032129018");
+	//delete(fp, "8811032129018");
 	if(argc > 3 ){
 		for(int i=0; i< argc; i++){
 			//printf("[%d] : %s\n", i, argv[i]);
@@ -273,6 +276,7 @@ int main(int argc, char *argv[])
 			strcpy(input.addr, argv[6]);
 			strcpy(input.phone, argv[7]);
 			strcpy(input.email, argv[8]);
+			/*
 			pack(recordbuf, &input);
 			printf("%s\n", recordbuf);
 			printf("size : %ld\n",strlen(recordbuf));
@@ -281,6 +285,8 @@ int main(int argc, char *argv[])
 			printf("unpack : %s\n", tmp.id);
 			printf("unpack : %s\n", tmp.age);
 			printf("unpack : %s\n", tmp.email);
+			*/
+			add(fp, &input);
 
 		}else if(option == 'd'){ //record delete
 			
