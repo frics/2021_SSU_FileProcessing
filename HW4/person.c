@@ -6,7 +6,7 @@
 //./a.out a person.dat "8811032129018" "GD Hong" "23" "Seoul" "02-820-0924" "gdhong@ssu.ac.kr"
 //필요한 경우 헤더 파일과 함수를 추가할 수 있음
 #define HEADER_RECORD 16
-
+#define RECORD_PER_PAGE (HEADER_AREA_SIZE-4)/8
 typedef struct _Header{
 	int page_cnt;
 	int record_cnt;
@@ -38,8 +38,10 @@ void readPage(FILE *fp, char *pagebuf, int pagenum)
 		fprintf(stderr, "page size error.\n");
 		exit(1);
 	}*/
+	int size;
 	fseek(fp, PAGE_SIZE*pagenum+HEADER_RECORD, SEEK_SET);
-	fread((void *)pagebuf, PAGE_SIZE, 1, fp);
+	size = fread((void *)pagebuf, PAGE_SIZE, 1, fp);
+	printf("fread size : %d\n", size);
 }
 
 //
@@ -54,6 +56,7 @@ void writePage(FILE *fp, const char *pagebuf, int pagenum)
 		fprintf(stderr, "page size error.\n");
 		exit(1);
 	}*/
+	
 	fseek(fp, PAGE_SIZE*pagenum+HEADER_RECORD, SEEK_SET);
 	fwrite((void *)pagebuf, PAGE_SIZE, 1, fp);
 }
@@ -126,6 +129,7 @@ void writeHeader(FILE *fp){
 //
 // 새로운 레코드를 저장하는 기능을 수행하며, 터미널로부터 입력받은 필드값들을 구조체에 저장한 후 아래 함수를 호출한다.
 //
+
 void add(FILE *fp, const Person *p)
 {
 	//1. 삭제 데이터가 존재하는 지 확인
@@ -136,7 +140,7 @@ void add(FILE *fp, const Person *p)
 	char *recordbuf = malloc(sizeof(char)*MAX_RECORD_SIZE);
 	void *header_area = malloc(HEADER_AREA_SIZE);
 	int record_cnt;
-	int page_num;
+	int page_num, record_num;
 	int offset, len;
 
 	pack(recordbuf, p);
@@ -155,11 +159,42 @@ void add(FILE *fp, const Person *p)
 		}while(len < sizeof(recordbuf));//해당 위치에 recordbuf를 쓸 수 있을 때
 		
 	}else{//삭제 데이터가 없으면 마지막에 append
+		printf("NO DELETED RECORD\n");
 		int page_num = header_record.page_cnt < 1 ? 0 : header_record.page_cnt-1;
 		readPage(fp, pagebuf, page_num);
+		printf("%s\n", pagebuf);
 		memcpy(header_area, pagebuf, HEADER_AREA_SIZE);
 		memcpy(&record_cnt, header_area, sizeof(int));
+		printf("record_cnt : %d\n", record_cnt);
+		record_num = (record_cnt-1)*8+4;
+		memcpy(&offset, header_area+record_num, sizeof(int));
+		memcpy(&len, header_area+record_num+4, sizeof(int));
+		printf("offset : %d\n", offset);
+		printf("len : %d\n", len);
+		int remain = DATA_AREA_SIZE-len;
+		printf("remain : %d\n", remain);
 		
+		//현재 페이지에 쓸 수 있을 때
+		if(remain >= strlen(recordbuf) && record_cnt < RECORD_PER_PAGE){
+			
+			record_cnt > 0 ? offset += len : 0;
+			len = strlen(recordbuf);
+			printf("offset : %d , len : %d\n", offset, len);
+			memcpy(header_area+4+(record_cnt*8), &offset, sizeof(int));
+			memcpy(header_area+4+(record_cnt*8)+4, &len, sizeof(int));
+			record_cnt++;
+			memcpy(header_area, &record_cnt, sizeof(int));
+			
+			memcpy(pagebuf, header_area, HEADER_AREA_SIZE);
+			memcpy(pagebuf+HEADER_AREA_SIZE+offset, recordbuf, len);
+			writePage(fp, pagebuf, page_num);
+			printf("CAN ADD : %s\n", recordbuf);
+
+			readPage(fp, pagebuf, page_num);
+			
+		}else{//새로운 페이지 alloc
+
+		}
 		
 		
 
@@ -236,13 +271,14 @@ int main(int argc, char *argv[])
 
 	if((fp = fopen(argv[2], "r+b")) == NULL){
 		fp = fopen(argv[2], "w+b");
-		header_record.page_cnt = 0;
-		header_record.record_cnt = 0;
+		header_record.page_cnt = 1;
+		header_record.record_cnt = 1;
 		header_record.d_page_num = -1;
 		header_record.d_record_num = -1;
 		fwrite(&header_record, HEADER_RECORD, 1, fp);
 		//tmp
 		/*
+		printf("write tmp page\n");
 		char *page = (char*)malloc(sizeof(char)*PAGE_SIZE);
 		memset(page, '\0', PAGE_SIZE);
 		int cnt = 1, offset = 0, len = 60;
